@@ -1,241 +1,123 @@
 "use client";
 
-import { type ElementType, type ReactNode } from "react";
-import { motion } from "framer-motion";
-import {
-  ArrowUpRight,
-  Camera,
-  Play,
-  PlayCircle,
-  ShoppingBag,
-} from "lucide-react";
-import { Stagger, StaggerItem } from "@/components/motion";
+import { type ElementType, type MouseEvent } from "react";
+import { motion, useMotionTemplate, useMotionValue } from "framer-motion";
+import { Layers, Scissors, Zap } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type Tag = "film" | "shop" | "gallery" | "reel" | "brand";
-
-const TAG_STYLES: Record<Tag, string> = {
-  film: "bg-primary/15 text-primary ring-primary/25",
-  shop: "bg-accent/15 text-accent ring-accent/25",
-  gallery: "bg-surface-raised text-foreground ring-border",
-  reel: "bg-primary/15 text-primary ring-primary/25",
-  brand: "bg-accent/15 text-accent ring-accent/25",
-};
-
-interface BentoCardProps {
-  className?: string;
-  tag: Tag;
-  tagLabel: string;
-  title: string;
-  subtitle: string;
-  meta?: string;
-  cta: string;
+interface Material {
   icon: ElementType;
-  children?: ReactNode;
+  title: string;
+  desc: string;
+  stat: string;
+  statLabel: string;
+  className?: string;
 }
 
-/**
- * A single bento cell. Media area doubles as a poster placeholder — swap the
- * `absolute inset-0` gradient div for a `next/image`/`next/video` element
- * once real assets exist; the framing (corner brackets, tag, CTA reveal)
- * is designed to sit on top of either.
- */
-function BentoCard({
-  className,
-  tag,
-  tagLabel,
-  title,
-  subtitle,
-  meta,
-  cta,
-  icon: Icon,
-}: BentoCardProps) {
+const MATERIALS: Material[] = [
+  {
+    icon: Layers,
+    title: "Full-Grain Italian Leather",
+    desc: "Sourced from a single Tuscan tannery, vegetable-tanned over 40 days for a patina that only gets better with wear.",
+    stat: "1.4mm",
+    statLabel: "Average thickness",
+    className: "lg:col-span-2 lg:row-span-2",
+  },
+  {
+    icon: Scissors,
+    title: "Zero-Waste Cut Pattern",
+    desc: "Every panel is nested by algorithm before the blade touches hide — nothing goes to landfill.",
+    stat: "0%",
+    statLabel: "Material waste",
+  },
+  {
+    icon: Zap,
+    title: "Aerospace-Grade Aluminum Zippers",
+    desc: "CNC-machined from 6061 aluminum, anodized matte black, rated for 10,000+ pull cycles.",
+    stat: "6061",
+    statLabel: "Aluminum alloy",
+  },
+];
+
+function BentoCard({ icon: Icon, title, desc, stat, statLabel, className }: Material) {
+  // Cursor-follow spotlight — tracked as motion values so the radial
+  // gradient position updates without triggering React re-renders.
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
+  function handleMouseMove(e: MouseEvent<HTMLDivElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    mouseX.set(e.clientX - rect.left);
+    mouseY.set(e.clientY - rect.top);
+  }
+
+  const spotlight = useMotionTemplate`radial-gradient(240px circle at ${mouseX}px ${mouseY}px, rgba(255,255,255,0.08), transparent 70%)`;
+
   return (
-    <motion.article
-      whileHover="hover"
-      initial="rest"
-      animate="rest"
-      className={cn(
-        "group glass relative flex flex-col justify-end overflow-hidden rounded-2xl border p-6",
-        "shadow-soft transition-shadow duration-base ease-out-expo hover:shadow-float",
-        className,
-      )}
-    >
-      {/* Poster / media placeholder layer */}
+    <div className={cn("group relative rounded-2xl p-px", className)}>
+      {/* Rotating border-beam: an oversized conic gradient spinning behind
+          a 1px inset, so only a thin arc of light ever traces the edge. */}
       <motion.div
         aria-hidden
-        className="absolute inset-0 -z-10 bg-gradient-to-br from-surface-raised via-surface to-background"
-        variants={{ rest: { scale: 1 }, hover: { scale: 1.06 } }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-      />
-      <div
-        aria-hidden
-        className="grid-bg absolute inset-0 -z-10 opacity-20 mix-blend-overlay"
-      />
-      <motion.div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_50%_20%,theme(colors.primary/25%),transparent_65%)]"
-        variants={{ rest: { opacity: 0 }, hover: { opacity: 1 } }}
-        transition={{ duration: 0.4 }}
-      />
-
-      {/* Viewfinder corner brackets — the signature cinematic touch */}
-      <motion.div
-        aria-hidden
-        className="pointer-events-none absolute inset-3"
-        variants={{
-          rest: { opacity: 0 },
-          hover: { opacity: 1, transition: { staggerChildren: 0.05 } },
+        className="absolute inset-0 -z-10 rounded-2xl opacity-25 transition-opacity duration-500 group-hover:opacity-100"
+        style={{
+          background:
+            "conic-gradient(from 0deg, transparent 0%, rgba(255,255,255,0.9) 8%, transparent 20%)",
         }}
+        animate={{ rotate: 360 }}
+        transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+      />
+
+      <div
+        onMouseMove={handleMouseMove}
+        className="relative flex h-full flex-col justify-between overflow-hidden rounded-[calc(1rem_-_1px)] bg-zinc-950 p-7"
       >
-        {(["top-2 left-2 border-t border-l", "top-2 right-2 border-t border-r", "bottom-2 left-2 border-b border-l", "bottom-2 right-2 border-b border-r"] as const).map(
-          (pos) => (
-            <motion.span
-              key={pos}
-              variants={{ rest: { opacity: 0, scale: 0.8 }, hover: { opacity: 1, scale: 1 } }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
-              className={cn("absolute size-4 border-primary/70", pos)}
-            />
-          ),
-        )}
-      </motion.div>
-
-      {/* Tag */}
-      <span
-        className={cn(
-          "absolute top-5 left-5 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-fluid-xs font-medium ring-1",
-          TAG_STYLES[tag],
-        )}
-      >
-        <Icon className="size-3.5" aria-hidden />
-        {tagLabel}
-      </span>
-
-      {meta && (
-        <span className="absolute top-5 right-5 rounded-full bg-background/60 px-2.5 py-1 font-mono text-fluid-xs tabular-nums text-muted-foreground ring-1 ring-border backdrop-blur-sm">
-          {meta}
-        </span>
-      )}
-
-      {/* Center play affordance for media cards */}
-      {(tag === "film" || tag === "reel") && (
         <motion.div
           aria-hidden
-          className="absolute inset-0 flex items-center justify-center"
-          variants={{
-            rest: { opacity: 0, scale: 0.7 },
-            hover: { opacity: 1, scale: 1 },
-          }}
-          transition={{ duration: 0.3, ease: "easeOut" }}
-        >
-          <span className="glass flex size-14 items-center justify-center rounded-full shadow-elevated">
-            <Play className="size-5 translate-x-0.5 text-foreground" aria-hidden fill="currentColor" />
+          className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+          style={{ background: spotlight }}
+        />
+
+        <div className="relative">
+          <span className="inline-flex size-10 items-center justify-center rounded-lg bg-white/5 ring-1 ring-white/10">
+            <Icon className="size-4.5 text-white" aria-hidden />
           </span>
-        </motion.div>
-      )}
+          <h3 className="mt-5 text-lg font-semibold text-white">{title}</h3>
+          <p className="mt-2 max-w-sm text-sm text-neutral-400">{desc}</p>
+        </div>
 
-      {/* Copy block */}
-      <div className="relative">
-        <h3 className="text-fluid-lg font-semibold text-foreground">{title}</h3>
-        <p className="mt-1 text-fluid-sm text-muted-foreground">{subtitle}</p>
-
-        <motion.span
-          className="mt-3 inline-flex items-center gap-1 text-fluid-sm font-medium text-primary"
-          variants={{
-            rest: { opacity: 0, y: 6 },
-            hover: { opacity: 1, y: 0 },
-          }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
-        >
-          {cta}
-          <ArrowUpRight className="size-3.5" aria-hidden />
-        </motion.span>
+        <div className="relative mt-8 border-t border-white/10 pt-4">
+          <span className="block font-mono text-2xl font-bold tabular-nums text-white">
+            {stat}
+          </span>
+          <span className="block text-xs uppercase tracking-widest text-neutral-500">
+            {statLabel}
+          </span>
+        </div>
       </div>
-    </motion.article>
+    </div>
   );
 }
 
 export default function BentoShowcase() {
   return (
-    <section className="relative mx-auto max-w-6xl overflow-hidden px-6 py-24">
-      <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-        <div className="aurora-blob animate-aurora absolute top-0 left-1/4 h-[28rem] w-[28rem] opacity-50" />
+    <section className="relative w-full bg-black py-24 sm:py-32">
+      <div className="mx-auto max-w-6xl px-6">
+        <div className="text-center">
+          <span className="font-mono text-xs uppercase tracking-[0.2em] text-neutral-500">
+            The Material Engine
+          </span>
+          <h2 className="mt-3 text-3xl font-bold text-balance text-white sm:text-4xl">
+            Nothing on this jacket is arbitrary.
+          </h2>
+        </div>
+
+        <div className="mt-14 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:auto-rows-[13rem]">
+          {MATERIALS.map((material) => (
+            <BentoCard key={material.title} {...material} />
+          ))}
+        </div>
       </div>
-
-      <StaggerItem>
-        <span className="glass inline-flex items-center gap-2 rounded-full px-4 py-1.5 font-mono text-fluid-xs uppercase tracking-[0.18em] text-muted-foreground">
-          Archive — SS25
-        </span>
-        <h2 className="mt-5 max-w-lg text-fluid-3xl font-semibold leading-tight text-balance">
-          Where the{" "}
-          <span className="gradient-text animate-gradient-shift">film</span>{" "}
-          meets the fit.
-        </h2>
-      </StaggerItem>
-
-      <Stagger className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:auto-rows-[13rem]">
-        <StaggerItem className="lg:col-span-2 lg:row-span-2">
-          <BentoCard
-            className="min-h-[22rem] lg:min-h-0 lg:h-full"
-            tag="film"
-            tagLabel="Film — SS25"
-            icon={PlayCircle}
-            title="Static In Motion"
-            subtitle="The full campaign film, shot on 16mm."
-            meta="04:12"
-            cta="Watch the film"
-          />
-        </StaggerItem>
-
-        <StaggerItem className="sm:col-span-2 lg:col-span-2">
-          <BentoCard
-            className="min-h-[13rem] lg:h-full"
-            tag="shop"
-            tagLabel="Shop"
-            icon={ShoppingBag}
-            title="The Capsule Drop"
-            subtitle="12 pieces. Limited run, numbered."
-            cta="Shop now"
-          />
-        </StaggerItem>
-
-        <StaggerItem className="lg:col-span-1">
-          <BentoCard
-            className="min-h-[13rem] lg:h-full"
-            tag="gallery"
-            tagLabel="Lookbook"
-            icon={Camera}
-            title="Vol. 04"
-            subtitle="38 frames, unretouched."
-            cta="View gallery"
-          />
-        </StaggerItem>
-
-        <StaggerItem className="lg:col-span-1">
-          <BentoCard
-            className="min-h-[13rem] lg:h-full"
-            tag="reel"
-            tagLabel="Behind the Scenes"
-            icon={Play}
-            title="Raw Cuts"
-            subtitle="No color grade, no script."
-            meta="01:47"
-            cta="Play clip"
-          />
-        </StaggerItem>
-
-        <StaggerItem className="sm:col-span-2 lg:col-span-4">
-          <BentoCard
-            className="min-h-[9rem] lg:h-full"
-            tag="brand"
-            tagLabel="Aperture"
-            icon={ArrowUpRight}
-            title="Cinematic drops, engineered for motion."
-            subtitle="Every release starts as a film before it's ever a garment."
-            cta="Explore the archive"
-          />
-        </StaggerItem>
-      </Stagger>
     </section>
   );
 }

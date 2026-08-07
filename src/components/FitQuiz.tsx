@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import MagneticButton from "@/components/MagneticButton";
 
 // TODO: replace with your real Make.com webhook URL.
 const WEBHOOK_URL = "https://hook.us1.make.com/REPLACE_WITH_YOUR_WEBHOOK_ID";
@@ -202,23 +203,21 @@ export default function FitQuiz() {
               </button>
 
               {step < STEP_COUNT - 1 ? (
-                <button
-                  type="button"
+                <MagneticButton
                   onClick={goNext}
                   disabled={!isStepValid(step, data)}
-                  className="inline-flex h-11 items-center rounded-full bg-white px-6 text-sm font-semibold text-black transition-opacity disabled:cursor-not-allowed disabled:opacity-30"
+                  className="h-11 px-6 text-xs"
                 >
                   Continue
-                </button>
+                </MagneticButton>
               ) : (
-                <button
-                  type="button"
+                <MagneticButton
                   onClick={handleSubmit}
                   disabled={!isStepValid(2, data) || status === "submitting"}
-                  className="inline-flex h-11 items-center rounded-full bg-white px-6 text-sm font-semibold text-black transition-opacity disabled:cursor-not-allowed disabled:opacity-30"
+                  className="h-11 px-6 text-xs"
                 >
                   {status === "submitting" ? "Locking…" : "Lock Schematic & Checkout"}
-                </button>
+                </MagneticButton>
               )}
             </div>
           )}

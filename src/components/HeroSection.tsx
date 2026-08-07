@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import MagneticButton from "@/components/MagneticButton";
 
 function scrollToQuiz() {
   document.getElementById("fit-quiz")?.scrollIntoView({ behavior: "smooth" });
@@ -58,15 +59,14 @@ export default function HeroSection() {
           100 jackets. Hand-numbered. Never restocked.
         </motion.p>
 
-        <motion.button
+        <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.7 }}
-          onClick={scrollToQuiz}
-          className="mt-10 inline-flex h-14 items-center gap-2 rounded-full bg-white px-8 text-sm font-semibold uppercase tracking-wide text-black transition-transform duration-200 hover:scale-[1.03] active:scale-95"
+          className="mt-10"
         >
-          Secure Your Edition
-        </motion.button>
+          <MagneticButton onClick={scrollToQuiz}>Secure Your Edition</MagneticButton>
+        </motion.div>
 
         <motion.div
           aria-hidden
